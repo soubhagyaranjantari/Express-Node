@@ -7,26 +7,43 @@ const users = require('./MOCK_DATA.json')
 
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
+app.use((req, res, next) => {
+    console.log('hello from created middleware');
+    // res.end('pk you are done')
+    next()
+})
+
+app.use((req, res, next) => {
+    fs.appendFile('log.txt',
+        `${Date.now()} ${req.method} ${req.path}\n`,
+        (err, data) => {
+            next()
+        }
+    )
+})
+
 app.get('/', (req, res) => {
     res.send('From Home Page')
 })
-app.post('/users', (req, res) => {
-    const body = req.body;
-    // console.log(req.body);
-    users.push({ ...body, id: users.length + 1 })
-    fs.writeFile('./MOCK_DATA.json', JSON.stringify(users), (err, data) => {
-        return res.json({ status: "success", id: users.length })
-    })
-    // return res.json({ data: req.body })
-
-})
 app.get(`/users`, (req, res) => {
+    res.setHeader('X-MyName','SOUBHAGYA')
+    console.log(req.headers);
     return res.send(`
         <ol>
             ${users.map(ele => `<li>${ele.first_name + ' ' + ele.last_name}</li><br>`).join('')}
         </ol>
     `);
 });
+app.post('/users', (req, res) => {
+    const body = req.body;
+    // console.log(req.body);
+    users.push({ ...body, id: users.length + 1 })
+    fs.writeFile('./MOCK_DATA.json', JSON.stringify(users), (err, data) => {
+        return res.status(201).json({ status: "success", id: users.length })
+    })
+    // return res.json({ data: req.body })
+
+})
 
 app.route('/api/users/:id')
     .get((req, res) => {
